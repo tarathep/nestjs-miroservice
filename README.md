@@ -28,10 +28,12 @@
 
 
 ## Installation
-
 ```bash
+$ npm i --save kafkajs
 $ npm install
+@nestjs/microservices
 ```
+more detail at https://docs.nestjs.com/microservices/kafka
 
 ## Running the app
 
