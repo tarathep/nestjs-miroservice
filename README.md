@@ -1,5 +1,8 @@
+
+
+# NestJS Microservice Kafka
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
+  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="30%" alt="Nest Logo" /></a
 </p>
 
 [circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
@@ -19,12 +22,10 @@
     <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
   <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
 </p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+## Example Output
+<img src="https://raw.githubusercontent.com/tarathep/nestjs-miroservice/main/Capture.PNG"> 
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
 ## Installation
 
@@ -58,15 +59,89 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
+## How To 
+### Consumer Server
+- main.js
+```
+  //Config Consumer Server
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
+    transport: Transport.KAFKA,
+    options: {
+      client: {
+        //kafka server : support cluster
+        brokers: ['10.138.38.65:9092'],
+      },
+      consumer: {
+        //group id like app name
+          groupId: 'my-kafka-consumer',
+      }
+    }
+  });
+```
+- app.controller.ts
+```
+ //--------- CONSUMER ----------
+
+  @MessagePattern('topicA') // TOPIC NAME FOR SUBSCRIBE
+  subscribeMessage(@Payload() message) {
+    //show message to console
+    console.log(message.value);
+    return 'Hello World';
+  }
+```
+
+### Producer Publish
+- app.controller.ts
+```
+//--------- PRODUCER -----------
+
+  @Client({
+    transport: Transport.KAFKA,
+    options: {
+      client: {
+        clientId: 'kafkaSample',
+        brokers: ['10.138.38.65:9092'],
+      },
+      consumer: {
+        groupId: 'my-kafka-consumer' // Should be the same thing we give in consumer
+      }
+    }
+  })
+  
+  client: ClientKafka;
+
+  async onModuleInit() {
+    // Need to subscribe to topic 
+    // so that we can get the response from kafka microservice
+    this.client.subscribeToResponseOf('topicA');
+    await this.client.connect();
+  }
+  
+
+  // localhost:3000/
+  @Get()
+  PublishMessage() {
+    //model message
+    var message = {
+      "uuid": '941a3018-d599-4f9a-9365-17e2c397aa00',
+      "timestamp": new Date(),
+      "topic": 'topicA',
+      "payload": '{"say","Hello message"}'
+    }
+    return this.client.send(message.topic, JSON.stringify(message)); // args - topic, message
+  }
+```
+
+## For Working 
+- go to localhost:3000/
+- see message at console
+
 ## Support
 
 Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
 
 ## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
 - Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
 
 ## License
 
